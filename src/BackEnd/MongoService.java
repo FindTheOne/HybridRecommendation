@@ -4,10 +4,13 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
+
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+import com.google.gson.JsonArray;
 import com.mongodb.*;
+import java.util.*;
 
 public class MongoService {
 	public MongoClientURI mongoLab;
@@ -15,8 +18,8 @@ public class MongoService {
 	public DB database;
 	public DBCollection collection;
 	public DBObject currentUser;
-	public static String username = "amrish";
-	
+	public static String username = "nikita";
+
 	//comment
 	public MongoService(){
 		try{
@@ -28,9 +31,9 @@ public class MongoService {
 		database = client.getDB(Constant.FINDTHEONEDB);
 		currentUser = null;
 	}
-	
+
 	// Collaborative Recommendation
-	public  String getPersonalizedRecommendation(String username){
+	public List<JSONObject> getPersonalizedRecommendation(String username){
 		String result = "";
 		String friends = getFriends(username);
 		String[] friendsList = parseList(friends);
@@ -41,7 +44,10 @@ public class MongoService {
 		System.out.println("interest list : "+Arrays.toString(interestsList));
 
 		DBCollection meetingCollection = database.getCollection(Constant.meetingCollection);
-		
+
+		List<JSONObject> resultJSON = new ArrayList<>();
+
+
 		for (String friend : friendsList){
 			for(String interest : interestsList){
 				BasicDBObject query = new BasicDBObject();
@@ -60,14 +66,24 @@ public class MongoService {
 					System.out.println("2. Subject : "+interest);
 					System.out.println("3. Teacher : "+teacher);
 					System.out.println("3. Location : "+location);
-					
 					// Nikita learnt CS50 from Meghana at San Jose State University.
 					// Would you like to contact Meghana?
+					try{
+						JSONObject entry = new JSONObject();
+						entry.put("friend", friend.toString());
+						entry.put("subject", interest);
+						entry.put("location", location);
+						entry.put("teacher", teacher);
+						
+						resultJSON.add(entry);
+					} catch(JSONException exception){
+						exception.printStackTrace();
+					}
 				}
 			}
 		}
-		
-		return result;
+		System.out.println("printing return json : "+resultJSON.toString());
+		return resultJSON;
 	}
 
 	public String getInterests(String userName){
@@ -108,8 +124,9 @@ public class MongoService {
 			return list;
 		return new String[0];
 	}
-	public static String getGeneralRecommendation(){
-		return "";
+	public static List<JSONObject> getGeneralRecommendation(){
+		
+		return null;
 	}
 
 
@@ -117,6 +134,6 @@ public class MongoService {
 	public static void main(String[] args) throws Exception{
 
 		MongoService service = new MongoService();
-		String personalRecommendation = service.getPersonalizedRecommendation(MongoService.username);
+		List<JSONObject> personalRecommendation = service.getPersonalizedRecommendation(MongoService.username);
 	}
 }
